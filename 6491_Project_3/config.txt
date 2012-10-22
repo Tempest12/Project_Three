@@ -1,0 +1,45 @@
+3
+# Config File! Now with comments! And Spaces!
+
+section window 5
+
+position_X 75
+position_Y 75
+
+width 700
+height 700
+
+title Hi
+
+end_section
+
+section camera 13
+
+distance 5.0
+horizontal_angle 0.0f
+vertical_angle 90.0f
+
+camera_up_vector_x 0.0f
+camera_up_vector_y 1.0f
+camera_up_vector_z 0.0f
+
+camera_focus_x 0.0f
+camera_focus_y 0.0f
+camera_focus_z 0.0f
+
+vertical_delta 5.0f
+horizontal_delta 5.0f
+distance_delta 1.0f
+
+invert_y false
+
+end_section
+
+section colours 4
+
+bg_colour_r 0.0f
+bg_colour_g 0.0f
+bg_colour_b 0.0f
+bg_colour_a 0.0f
+
+end_section
