@@ -28,31 +28,27 @@ Camera::Camera()
 
 void Camera::calculateCamera()
 {
-	//std::cout << "Right" << std::endl;
-
-	//std::cout << "Updating Camera Location Updated" << std::endl;
-
-	/*
-	cameraCoordinates[0] = sin(radians(cameraPhi)) * sin(radians(cameraTheta)) * cameraR + cameraCenter[0];
-	cameraCoordinates[1] = cos(radians(cameraPhi)) * cameraR + cameraCenter[1];
-    cameraCoordinates[2] = sin(radians(cameraPhi)) * cos(radians(cameraTheta)) * cameraR + cameraCenter[2]; 
-
-	vert = phi
-	*/
+	if(this -> updateRequired)
+	{
+		this -> updateRequired = false;
+	}
+	else
+	{
+		return;
+	}
 
 	this -> position -> x = distance * sin(verticalAngle * degreeToRadian) * cos(horizontalAngle * degreeToRadian);
 	this -> position -> y = distance * cos(verticalAngle * degreeToRadian);
 	this -> position -> z = distance * sin(verticalAngle * degreeToRadian) * sin(horizontalAngle * degreeToRadian);
-							
-
-	std::cout << "X: " << position -> x << " Y: " << position -> y << " Z: " << position -> z << std::endl;
 }
 
 void Camera::changeHorizontalAngle(bool left)
 {
 	this -> updateRequired = true;
 
-	std::cout << this -> horizontalAngle << std::endl;
+	//std::cout << this -> horizontalAngle << std::endl;
+
+	//std::cout << "Flat as shit" << std::endl;
 
 	if(left)
 	{
@@ -63,29 +59,37 @@ void Camera::changeHorizontalAngle(bool left)
 		this -> horizontalAngle += horizontalDelta;
 	}
 
-	std::cout << this -> horizontalAngle << std::endl;
+	//std::cout << this -> horizontalAngle << std::endl;
 }
 
 void Camera::changeVerticalAngle(bool up)
 {
+	//std::cout << "Hold the phone" << std::endl;
+
 	this -> updateRequired = true;
 
 	if(up)
 	{
 		this -> verticalAngle += verticalDelta;
-		if(this -> verticalAngle > 179.0f)
-		{
-			this -> verticalAngle = 179.0f;
-		}
 	}
 	else
 	{
 		this -> verticalAngle -= verticalDelta;
-		if(this -> verticalAngle < 1.0f)
-		{
-			this -> verticalAngle = 1.0f;
-		}
 	}
+
+	//std::cout << "WAT: " << verticalAngle << std::endl;
+
+	if(this -> verticalAngle > 179.0f)
+	{
+		//std::cout << " before: " << verticalAngle << std::endl;
+		this -> verticalAngle = 179.0f;
+		//std::cout << " after " << verticalAngle << std::endl;
+	}
+	if(this -> verticalAngle < 1.0f)
+	{
+		this -> verticalAngle = 1.0f;
+	}
+
 }
 
 void Camera::changeDistance(bool closer)

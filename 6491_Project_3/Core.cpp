@@ -18,6 +18,8 @@
 //Globl Data
 RenderWindow* window;
 
+float refreshRate = 0.0f;
+
 //Private Data
 
 
@@ -28,6 +30,10 @@ void initCore(void)
 	window = new RenderWindow(convertSettingToInt("window", "width"), convertSettingToInt("window", "height"), (char*)windowName -> c_str());
 
 	window -> initGraphcs();
+
+	srand(time(0));
+
+	refreshRate = convertSettingToFloat("window", "refresh_rate");
 }
 
 void uninitCore(void)
@@ -49,7 +55,7 @@ void run(void)
 	window -> show();
 
 	//Start timer
-	SetTimer(NULL, NULL, 1000.0f/30.0f, (TIMERPROC)redrawIt);
+	SetTimer(NULL, NULL, 1000.0f/(float)refreshRate, (TIMERPROC)redrawIt);
 
 	Fl::run();
 }

@@ -1,8 +1,13 @@
 #ifndef SPHERE_HPP
-#define SPEHER_HPP
+#define SPHERE_HPP
+
+#include <windows.h>
+#include <GL/GL.h>
+#include <GL/glut.h>
 
 #include "Vector3f.hpp"
 #include "Colour4f.hpp"
+#include "Core.hpp"
 
 class Sphere
 {
@@ -14,6 +19,7 @@ class Sphere
 
 		float radius;
 		Colour4f* colour;
+		bool moving;
 
 	protected:
 	private:
@@ -61,7 +67,7 @@ class Sphere
 			this -> colour = new Colour4f();
 		}
 
-		Sphere(Vector3f* position, Vector3f velocity, float radius)
+		Sphere(Vector3f* position, Vector3f* velocity, float radius)
 		{
 			this -> position = new Vector3f(position);
 			this -> velocity = new Vector3f(velocity);
@@ -81,12 +87,12 @@ class Sphere
 			this -> colour = new Colour4f(that -> colour);
 		}
 
-		~Sphere(void)
+		/*~Sphere(void)
 		{
 			delete position;
 			delete velocity;
 			delete acceleration;
-		}
+		}*/
 
 		void setColour(Colour4f* colour)
 		{
@@ -98,12 +104,24 @@ class Sphere
 
 		void update(void)
 		{
+			Vector3f* tempV = MyVector::scale(velocity, 1000.0f / refreshRate);
+			Vector3f* tempA = MyVector::scale(acceleration, 1000.0f / refreshRate);
 
+			this -> position -> add(tempV);
+			this -> velocity -> add(tempA);
+			
+			delete tempA;
+			delete tempV;
 		}
 
 		void draw(void)
 		{
+			//Colour
 
+			glPushMatrix();
+				glTranslatef(position -> x, position -> y, position -> z);
+				glutSolidSphere(this -> radius, 15, 15);
+			glPopMatrix();
 		}
 
 		void addForce(void)

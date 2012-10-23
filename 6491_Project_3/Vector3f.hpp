@@ -46,10 +46,10 @@ class Vector3f
 		}
 	
 
-		~Vector3f(void)
+		/*~Vector3f(void)
 		{
 			return;
-		}
+		}*/
 
 
 		void normalize(void)
@@ -128,6 +128,13 @@ class Vector3f
        		z *= scalar;		
 		}	  
 		
+		inline void set(float x, float y, float z)
+		{
+			this -> x = x;
+			this -> y = y;
+			this -> z = z;
+		}
+
 		inline bool equals(Vector3f* that)
 		{
 			return ((this -> x == that -> x) && (this -> y == that -> y) && (this -> z == that -> z));
@@ -143,7 +150,7 @@ class Vector3f
 };
 
 
-namespace Vector
+namespace MyVector
 {
 	//Namespace Functions
 	Vector3f* add(Vector3f* one, Vector3f* two);

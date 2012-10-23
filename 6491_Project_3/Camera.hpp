@@ -3,6 +3,8 @@
 
 #include "Vector3f.hpp"
 
+extern float degreeToRadian;
+
 class Camera
 {
 	//Properties
@@ -33,6 +35,11 @@ class Camera
 		void changeHorizontalAngle(bool left);
 		void changeVerticalAngle(bool up);
 		void changeDistance(bool closer);
+
+		float getDistance()
+		{
+			return this -> distance;
+		}
 
 	protected:
 	private:

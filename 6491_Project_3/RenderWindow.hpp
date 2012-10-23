@@ -6,6 +6,10 @@
 
 #include "Vector3f.hpp"
 #include "Camera.hpp"
+#include "Sphere.hpp"
+
+
+void addToList(Sphere* sphere);
 
 class RenderWindow : public Fl_Gl_Window
 {
@@ -24,12 +28,13 @@ class RenderWindow : public Fl_Gl_Window
 
 		void initGraphcs();
 
-		void draw();
+		void draw(void);
+		void update(void);
 
 		int handle(int event);
 
 	protected:
 	private:
+		void spawnSpheres(void);
 };
-
 #endif

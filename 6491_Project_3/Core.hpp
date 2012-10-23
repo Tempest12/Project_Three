@@ -3,6 +3,8 @@
 
 #include <time.h>
 
+extern float refreshRate;
+
 void initCore(void);
 void uninitCore(void);
 

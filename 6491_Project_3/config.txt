@@ -1,7 +1,7 @@
 3
 # Config File! Now with comments! And Spaces!
 
-section window 5
+section window 6
 
 position_X 75
 position_Y 75
@@ -11,11 +11,13 @@ height 700
 
 title Hi
 
+refresh_rate 30.0f
+
 end_section
 
 section camera 13
 
-distance 5.0
+distance 6.0
 horizontal_angle 0.0f
 vertical_angle 90.0f
 
@@ -32,6 +34,19 @@ horizontal_delta 5.0f
 distance_delta 1.0f
 
 invert_y false
+
+end_section
+
+section spawn 6
+
+disk_one_radius 1.5f
+
+disk_two_distance 2.0f
+disk_two_radius 1.5f
+
+spawn_count 1
+spawn_radius 1.0f
+spawn_speed 0.05f
 
 end_section
 
