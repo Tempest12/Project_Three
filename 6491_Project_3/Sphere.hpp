@@ -35,16 +35,18 @@ class Sphere
 
 			this -> radius = 1.0f;
 			this -> colour = new Colour4f();
+			this -> moving = true;
 		}
 
 		Sphere(float radius)
 		{
-			this -> position = new Vector3f();
-			this -> velocity = new Vector3f();
-			this -> acceleration = new Vector3f();
+			this -> position = new Vector3f(0.0f);
+			this -> velocity = new Vector3f(0.0f);
+			this -> acceleration = new Vector3f(0.0f);
 
 			this -> radius = radius;
 			this -> colour = new Colour4f();
+			this -> moving = true;
 		}
 
 		Sphere(float x, float y, float z)
@@ -55,6 +57,7 @@ class Sphere
 
 			this -> radius = 1.0f;
 			this -> colour = new Colour4f();
+			this -> moving = true;
 		}
 
 		Sphere(float x, float y, float z, float radius)
@@ -65,6 +68,7 @@ class Sphere
 
 			this -> radius = radius;
 			this -> colour = new Colour4f();
+			this -> moving = true;
 		}
 
 		Sphere(Vector3f* position, Vector3f* velocity, float radius)
@@ -75,6 +79,7 @@ class Sphere
 
 			this -> radius = radius;
 			this -> colour = new Colour4f();
+			this -> moving = true;
 		}
 
 		Sphere(Sphere* that)
@@ -85,6 +90,7 @@ class Sphere
 
 			this -> radius = that -> radius;
 			this -> colour = new Colour4f(that -> colour);
+			this -> moving = that -> moving;
 		}
 
 		/*~Sphere(void)
@@ -104,13 +110,18 @@ class Sphere
 
 		void update(void)
 		{
+			if(moving ==  false)
+			{
+				return;
+			}
+
 			Vector3f* tempV = MyVector::scale(velocity, 1000.0f / refreshRate);
-			Vector3f* tempA = MyVector::scale(acceleration, 1000.0f / refreshRate);
+			//Vector3f* tempA = MyVector::scale(acceleration, 1000.0f / refreshRate);
 
 			this -> position -> add(tempV);
-			this -> velocity -> add(tempA);
+			//this -> velocity -> add(tempA);
 			
-			delete tempA;
+			//delete tempA;
 			delete tempV;
 		}
 

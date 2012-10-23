@@ -36,5 +36,7 @@ class RenderWindow : public Fl_Gl_Window
 	protected:
 	private:
 		void spawnSpheres(void);
+
+		bool collisionDetectAndRespond(Sphere* one, Sphere* two);
 };
 #endif

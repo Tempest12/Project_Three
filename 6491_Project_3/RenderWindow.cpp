@@ -8,6 +8,7 @@
 #include <vector>
 #include <list>
 #include <stdlib.h>
+#include <math.h>
 
 #include "RenderWindow.hpp"
 #include "Core.hpp"
@@ -42,7 +43,7 @@ void RenderWindow::initGraphcs()
 {
 	glClearColor(convertSettingToFloat("colours", "bg_colour_r"), convertSettingToFloat("colours", "bg_colour_g"), convertSettingToFloat("colours", "bg_colour_b"), convertSettingToFloat("colours", "bg_colour_a"));
 
-	sphereList = new std::vector<Sphere>(5);
+	sphereList = new std::vector<Sphere>();
 
 	diskOneDistance = convertSettingToFloat("spawn", "spawn_radius");
 	diskOneRadius = convertSettingToFloat("spawn", "disk_one_radius");
@@ -53,6 +54,10 @@ void RenderWindow::initGraphcs()
 	spawnCount = convertSettingToFloat("spawn", "spawn_count");
 	spawnRadius = convertSettingToFloat("spawn", "spawn_radius");
 	spawnSpeed = convertSettingToFloat("spawn", "spawn_speed");
+
+	Sphere first = Sphere(spawnRadius);
+	first.moving = false;
+	sphereList -> push_back(first);
 }
 
 void RenderWindow::update(void)
@@ -66,14 +71,31 @@ void RenderWindow::update(void)
 	{
 		(*sphereList)[index].update();		
 	}
+	
+	//int fuck = sphereList -> size();
 
 	//Do Coliision Detection
+	for(int indexOne = (int)sphereList ->size() - 1; indexOne >= 0; indexOne--)
+	{
+		if((*sphereList)[indexOne].moving == false)
+		{
+			continue;//Skip the spheres that are no longer moving.
+		}
+
+		for(int indexTwo = indexOne - 1; indexTwo >= 0; indexTwo--)
+		{
+			bool temp = collisionDetectAndRespond(&(*sphereList)[indexOne], &(*sphereList)[indexTwo]);
+
+			if(temp)
+			{
+				break;
+			}
+		}
+	}
 }
 
 void RenderWindow::draw()
 {
-	
-
 	glEnable(GL_DEPTH_TEST);
 
 	glMatrixMode(GL_PROJECTION);
@@ -86,18 +108,15 @@ void RenderWindow::draw()
 
 	update();
 
+	glColor3f(0.0f, 0.0f, 0.8f);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	//Draw Spheres
     for(int index = 0; index < sphereList -> size(); index++)
 	{
 		(*sphereList)[index].draw();
 	}
-
-
-
-	glColor3f(0.0f, 0.0f, 0.8f);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glutWireSphere(1.0f, 15, 15);
 }
 
 int RenderWindow::handle(int event)
@@ -175,8 +194,6 @@ int RenderWindow::handle(int event)
 			break;
 	}
 
-    
-
 	return 0;
 }
 
@@ -198,7 +215,7 @@ void RenderWindow::spawnSpheres()
 		Vector3f* diskOnePosition = MyVector::scale(directionVector, camera -> getDistance() - diskOneRadius);
 		Vector3f* diskTwoPosition = MyVector::scale(directionVector, camera -> getDistance() - diskOneRadius - diskTwoRadius);
 
-		Vector3f* otherDirectionVector = new Vector(
+		//Vector3f* otherDirectionVector = new Vector(
 
 		Vector3f* startVelocity = MyVector::subtract(diskTwoPosition, diskOnePosition);
 		startVelocity -> normalize();
@@ -213,5 +230,55 @@ void RenderWindow::spawnSpheres()
 		delete diskOnePosition;
 		delete diskTwoPosition;
 		delete startVelocity;
+	}
+}
+
+bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)
+{
+	float distance = sqrt((one->position->x - two->position->x) * (one->position->x - two->position->x) + (one->position->y - two->position->y) * (one->position->y - two->position->y) + (one->position->z - two->position->z) * (one->position->z - two->position->z));
+
+	if(distance < one->radius + two->radius)
+	{
+		//So respond to the collision
+		//by sliding the moving sphere backwards until the collision is a non factor.
+		if(one->moving && two->moving)
+		{
+			//This should never ever happen.. but in any case let them keep going until they collide with a not moving object
+			return false;
+		}
+		else if(one->moving && !two->moving)
+		{
+			Vector3f* restPoint = MyVector::subtract(one->position, two->position);
+
+			restPoint->normalize();
+			restPoint->scale(one->radius + two->radius);
+
+			restPoint->add(two->position);
+
+			one->position->copy(restPoint);
+			one->moving = false;
+
+			delete restPoint;
+		}
+		else if(!one->moving && two->moving)
+		{
+			Vector3f* restPoint = MyVector::subtract(two->position, one->position);
+
+			restPoint->normalize();
+			restPoint->scale(one->radius + two->radius);
+
+			restPoint->add(one->position);
+
+			two->position->copy(restPoint);
+			two->moving = false;
+
+			delete restPoint;
+		}
+
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
