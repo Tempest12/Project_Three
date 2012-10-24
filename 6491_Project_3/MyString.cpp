@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 #include <iostream>
 
 #include <ctype.h>
@@ -155,21 +156,7 @@ bool isWhiteSpace(string* line)
  */	
 bool equals(string* one, string* two)
 {
-	if(one != NULL && two != NULL)
-	{
-		if(one[0].compare(two[0]) == 0)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+	return (*one == *two);
 }
 
 /**
@@ -182,38 +169,7 @@ bool equals(string* one, string* two)
  */
 bool equalsIgnoreCase(string one, string two)
 {
-	unsigned int lengthOne = 0;
-	unsigned int lengthTwo = 0;
-
-	lengthOne = one.length();
-	lengthTwo = two.length();
-
-	//If the length's aren't the same then obviously the strings are different.
-	if(lengthOne != lengthTwo)
-	{
-		return false;
-	}
-
-	for(unsigned int stop = 0; stop < lengthOne; stop++)
-	{
-		//If Both letters then compare the lower case version of the letters
-		if(isalpha(one[stop]) & isalpha(two[stop]))
-		{
-			if(tolower(one[stop]) != tolower(two[stop]))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			//If not letters then chars must be equal
-			if(one[stop] != two[stop])
-			{
-				return false;
-			}
-		}		
-	}
-
-	//All chars the same
-	return true;
+	transform(one.begin(), one.end(), one.begin(), tolower);
+	transform(two.begin(), two.end(), two.begin(), tolower);
+	return (one == two);
 }

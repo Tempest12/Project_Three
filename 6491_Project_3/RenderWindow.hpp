@@ -7,6 +7,7 @@
 #include "Vector3f.hpp"
 #include "Camera.hpp"
 #include "Sphere.hpp"
+#include "CornerMesh.h"
 
 
 void addToList(Sphere* sphere);
@@ -16,6 +17,7 @@ class RenderWindow : public Fl_Gl_Window
 	//Properties
 	public:
 		Camera* camera;
+		CornerMesh* mesh;
 
 	protected:
 	private:
@@ -23,6 +25,7 @@ class RenderWindow : public Fl_Gl_Window
 	//Functions
 	public:
 		RenderWindow();
+		~RenderWindow();
 
 		RenderWindow(int width, int height, char* title);
 

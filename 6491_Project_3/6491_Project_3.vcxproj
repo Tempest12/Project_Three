@@ -67,6 +67,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Core.cpp" />
+    <ClCompile Include="CornerMesh.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MyString.cpp" />
     <ClCompile Include="RenderWindow.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="Colour4f.hpp" />
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="Core.hpp" />
+    <ClInclude Include="CornerMesh.h" />
     <ClInclude Include="Main.hpp" />
     <ClInclude Include="MyString.hpp" />
     <ClInclude Include="RenderWindow.hpp" />

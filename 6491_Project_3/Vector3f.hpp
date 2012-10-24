@@ -2,6 +2,10 @@
 #define _VECTOR3F_HPP
 
 #include <math.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+
 
 class Vector3f
 {
@@ -11,8 +15,8 @@ class Vector3f
 		float y;
 		float z;
 	
-	protected:
 	private:
+		std::string Vector3fString;
 
 	//Functions
 	public:
@@ -144,6 +148,15 @@ class Vector3f
 		{
 			return ((this -> x == that -> x) && (this -> y == that -> y) && (this -> z == that -> z));
 		} 
+
+		inline operator const char*()
+		{
+			std::ostringstream formattedVector3f;
+			formattedVector3f << x << ',' << y << ',' << z;
+
+			Vector3fString = formattedVector3f.str();
+			return Vector3fString.c_str();
+		}
 	
 	protected:
 	private:
