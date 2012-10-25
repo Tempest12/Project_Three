@@ -559,12 +559,14 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 			//Is this point a valid postion? IE no collisions
 			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
 			{
-				continue;
+				//contining after the deletions though
 			}
-			
-			//False means there were no collisions
-			restPoint->copy(&tempPosition);
-			found = true;
+			else
+			{
+				//False means there were no collisions
+				restPoint->copy(&tempPosition);
+				found = true;
+			}
 		}
 		else if(up > 0.0f && down < 0.0f)
 		{
@@ -574,12 +576,14 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 			//Is this point a valid postion? IE no collisions
 			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
 			{
-				continue;
+				//contining after the deletions though
 			}
-			
-			//False means there were no collisions
-			restPoint->copy(&tempPosition);
-			found = true;
+			else
+			{
+				//False means there were no collisions
+				restPoint->copy(&tempPosition);
+				found = true;
+			}
 		}
 		else if(up < 0.0f && down > 0.0f)
 		{
@@ -589,12 +593,14 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 			//Is this point a valid postion? IE no collisions
 			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
 			{
-				continue;
+				//contining after the deletions though
 			}
-			
-			//False means there were no collisions
-			restPoint->copy(&tempPosition);
-			found = true;
+			else
+			{
+				//False means there were no collisions
+				restPoint->copy(&tempPosition);
+				found = true;
+			}
 		}
 		else
 		{
