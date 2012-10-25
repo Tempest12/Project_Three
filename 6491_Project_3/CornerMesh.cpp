@@ -9,9 +9,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <queue>
+#include <map>
 
 #include "Vector3f.hpp"
 #include "CornerMesh.h"
+#include "Sphere.hpp"
+
 
 using namespace std;
 
@@ -151,4 +155,36 @@ void CornerMesh::renderMesh()
 	}
 	glEnd();
 	glFlush(); //not sure if needed
+}
+
+
+void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
+{
+	/*map<int,int> sphereToG = map<int,int>();
+
+	float rads = spheres[0].radius;
+
+	//Get highest sphere
+	int highestYIndex = 0;
+	float highestY = spheres[highestYIndex].position->y;
+
+	for(int i = 1; i < spheres.size(); ++i)
+	{
+		if(spheres[i].position->y > highestY)
+		{
+			highestYIndex = i;
+			highestY = spheres[i].position->y;
+		}
+	}
+
+	//Add highest to GTable
+	Sphere s = spheres[highestYIndex];
+	GTable.push_back(Vector3f(s.position));
+	sphereToG[highestYIndex] = GTable.size()-1;
+
+	Sphere roller = Sphere(s.position->x, s.position->y+rads+rollerRadius, s.position->z, rollerRadius);
+	Vector3f rollNormal = Vector3f(0,0,1);
+
+	//Find an initial edge
+	float minAngle = */
 }

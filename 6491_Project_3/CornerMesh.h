@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "Vector3f.hpp"
+#include "Sphere.hpp"
 
 using namespace std;
 
@@ -48,6 +49,9 @@ class CornerMesh
 		void saveMesh(string filename);
 		void loadMesh(string filename);
 		void renderMesh();
+
+		void shell(vector<Sphere>& spheres, float rollerRadius);
+
 };
 
 
