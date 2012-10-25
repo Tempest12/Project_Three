@@ -11,6 +11,7 @@
 #include <sstream>
 #include <queue>
 #include <map>
+#include <math.h>
 
 #include "Vector3f.hpp"
 #include "CornerMesh.h"
@@ -157,10 +158,97 @@ void CornerMesh::renderMesh()
 	glFlush(); //not sure if needed
 }
 
+int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere& roller)
+{
+	const float PI = 3.14159265;
+	int earliestI = -1;
+	float earliestTrajectory = PI;
+	Vector3f bestPos = Vector3f(roller.position);
+
+	Sphere a = spheres[e1];
+	Sphere b = spheres[e2];
+
+	Vector3f mid = Vector3f((a.position->x + b.position->x)/2.0, (a.position->y + b.position->y)/2.0, (a.position->z + b.position->z)/2.0);
+	Vector3f trajectory = Vector3f(roller.position->x - mid.x, roller.position->y - mid.y, roller.position->z - mid.z);
+	float trajectoryRadius = trajectory.magnitude();
+	
+	for(int i = 0; i < spheres.size(); ++i)
+	{
+		Sphere c = spheres[i];
+
+		Vector3f midToC = Vector3f(c.position->x - mid.x, c.position->y - mid.y, c.position->z - mid.z);
+		if(midToC.magnitude() >= 2*roller.radius)
+			continue;
+
+		//Sphere-plane intersection
+		Sphere ts = Sphere(c.position->x, c.position->y, c.position->z, roller.radius);
+
+		//Plane
+		Vector3f planeNormal = Vector3f(a.position->x - b.position->x, a.position->y - b.position->y, a.position->z - b.position->z);
+		planeNormal.normalize();
+		float D = planeNormal.x*-mid.x + planeNormal.y*-mid.y + planeNormal.z*-mid.z;
+
+		//Circle center
+		float numerator = planeNormal.x*ts.position->x + planeNormal.y*ts.position->y + planeNormal.z*ts.position->z + D;
+		float denominator = planeNormal.x*planeNormal.x + planeNormal.y*planeNormal.y + planeNormal.z*planeNormal.z;
+		float xc = c.position->x - (planeNormal.x*numerator)/denominator;
+		float yc = c.position->y - (planeNormal.y*numerator)/denominator;
+		float zc = c.position->z - (planeNormal.z*numerator)/denominator;
+
+		//Circle radius
+		float d = abs(numerator)/sqrt(denominator);
+		float r = sqrt(roller.radius*roller.radius - d*d);
+
+		if(ts.radius <= d)
+			continue;
+
+		//Trajectory circle radius is trajectoryRadius
+		//Trajectory circle center is mid
+		//Use trajectory for dot product calculations
+
+
+		//Calculate I and J to get new coordinates
+		Vector3f I = Vector3f(xc - mid.x, yc - mid.y, zc - mid.z);
+		float af = I.magnitude();
+		I.normalize();
+		Vector3f J = Vector3f(MyVector::crossProduct(&planeNormal, &I));
+
+		float x = 0.5*(af + (trajectoryRadius*trajectoryRadius - r*r)/af);
+		float y = sqrt(trajectoryRadius*trajectoryRadius - x*x);
+
+		Vector3f currentPos = Vector3f(mid.x + I.x*x + J.x*y, mid.y +I.y*x + J.y*y, mid.z + I.z*x + J.z*x);
+
+		Vector3f toCurrentPos = Vector3f(currentPos.x - mid.x, currentPos.y - mid.y, currentPos.z - mid.z);
+
+		float angle = acos(trajectory.dotProduct(&toCurrentPos));
+
+		if(angle < earliestTrajectory)
+		{
+			earliestTrajectory = angle;
+			earliestI = i;
+			bestPos = currentPos;
+		}
+	}
+
+	roller.position->x = bestPos.x;
+	roller.position->y = bestPos.y;
+	roller.position->z = bestPos.z;
+
+	return earliestI;
+}
+
 
 void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 {
-	/*map<int,int> sphereToG = map<int,int>();
+	GTable = vector<Vector3f>();
+	CTable = vector<int>();
+	VTable = vector<int>();
+	OTable = vector<int>();
+	numVerts = 0;
+	numTriangles = 0;
+
+	const float PI = 3.14159265;
+	sphereToG = map<int,int>();
 
 	float rads = spheres[0].radius;
 
@@ -178,13 +266,86 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 	}
 
 	//Add highest to GTable
-	Sphere s = spheres[highestYIndex];
-	GTable.push_back(Vector3f(s.position));
+	Sphere a = spheres[highestYIndex];
+	GTable.push_back(Vector3f(a.position));
+	++numVerts;
 	sphereToG[highestYIndex] = GTable.size()-1;
+	VTable.push_back(GTable.size()-1);
+	OTable.push_back(VTable.size()-1);
 
-	Sphere roller = Sphere(s.position->x, s.position->y+rads+rollerRadius, s.position->z, rollerRadius);
-	Vector3f rollNormal = Vector3f(0,0,1);
+	Sphere roller = Sphere(a.position->x, a.position->y+rollerRadius, a.position->z, rollerRadius);
 
 	//Find an initial edge
-	float minAngle = */
+	int secondSphereIndex = highestYIndex;
+	float minAngle = PI;
+	
+	Vector3f newPos = Vector3f(roller.position);
+
+	for(int i = 0; i < spheres.size(); ++i)
+	{
+		if(sphereToG.find(i) != sphereToG.end())
+			continue;
+
+		Sphere current = spheres[i];
+
+		//Create displacement vectors
+		Vector3f oldToRoller = Vector3f(roller.position->x - a.position->x, roller.position->y - a.position->y, roller.position->z - a.position->z);
+		Vector3f oldToNew = Vector3f(current.position->x - a.position->x, current.position->y - a.position->y, current.position->z - a.position->z);
+
+		if(oldToNew.magnitude() >= 2*rollerRadius)
+			continue;
+
+		//Crosses
+		Vector3f firstNormal = Vector3f(oldToNew.y*oldToRoller.z - oldToNew.z*oldToRoller.y, oldToNew.z*oldToRoller.x - oldToNew.x*oldToRoller.z, oldToNew.x*oldToRoller.y - oldToNew.y*oldToRoller.x);
+		Vector3f h1 = Vector3f(MyVector::crossProduct(&firstNormal, &oldToNew));
+		h1.normalize();
+
+		//Check which one to use
+		float angle = acos(h1.dotProduct(&oldToRoller));
+
+		if(angle < minAngle)
+		{
+			secondSphereIndex = i;
+			minAngle = angle;
+
+			Vector3f mid = Vector3f((current.position->x + a.position->x)/2.0, (current.position->y + a.position->y)/2.0, (current.position->z + a.position->z)/2.0);
+
+			double scalar = sqrt((oldToNew.magnitude()/2.0)*(oldToNew.magnitude()/2.0) + (rollerRadius)*(rollerRadius));
+
+			h1.x = scalar*h1.x;
+			h1.y = scalar*h1.y;
+			h1.z = scalar*h1.z;
+
+			newPos.x = mid.x+h1.x;
+			newPos.y = mid.y+h1.y;
+			newPos.z = mid.z+h1.z;
+		}
+	}
+
+	roller.position->x = newPos.x;
+	roller.position->y = newPos.y;
+	roller.position->z = newPos.z;
+
+	//Add second part of edge
+	Sphere b = spheres[secondSphereIndex];
+	GTable.push_back(Vector3f(b.position));
+	++numVerts;
+	sphereToG[secondSphereIndex] = GTable.size()-1;
+	VTable.push_back(GTable.size()-1);
+	OTable.push_back(VTable.size()-1);
+
+
+
+	//Create seed triangle
+	int thirdSphereIndex = pivotAroundEdge(spheres, highestYIndex, secondSphereIndex, roller);
+	if(thirdSphereIndex == -1)
+		return;
+
+	Sphere c = spheres[thirdSphereIndex];
+	GTable.push_back(Vector3f(c.position));
+	++numVerts;
+	sphereToG[thirdSphereIndex] = GTable.size()-1;
+	VTable.push_back(GTable.size()-1);
+	OTable.push_back(VTable.size()-1);
+	++numTriangles;
 }

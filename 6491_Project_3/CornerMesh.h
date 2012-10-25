@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -27,12 +28,18 @@ class CornerMesh
 
 		int numTriangles, numVerts;
 
+		map<int,int> sphereToG;
+
+
+		int pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere& roller);
+
 	public:
 		CornerMesh()	
 			: GTable(),
 			  CTable(),
 			  VTable(),
 			  OTable(),
+			  sphereToG(),
 			  numTriangles(0),
 			  numVerts(0){}
 
@@ -51,7 +58,6 @@ class CornerMesh
 		void renderMesh();
 
 		void shell(vector<Sphere>& spheres, float rollerRadius);
-
 };
 
 
