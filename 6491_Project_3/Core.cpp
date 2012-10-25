@@ -54,6 +54,8 @@ void run(void)
 {
 	window -> show();
 
+	//printSections();
+
 	//Start timer
 	SetTimer(NULL, NULL, 1000.0f/(float)refreshRate, (TIMERPROC)redrawIt);
 

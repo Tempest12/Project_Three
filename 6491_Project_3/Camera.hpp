@@ -30,11 +30,18 @@ class Camera
 
 		Camera();
 
-		void calculateCamera();
+		void calculateCamera(void);
 
-		void changeHorizontalAngle(bool left);
-		void changeVerticalAngle(bool up);
-		void changeDistance(bool closer);
+		void moveForward(void);
+		void moveBackward(void);
+		void moveLeft(void);
+		void moveRight(void);
+		void moveVertical(bool up);
+		void changeAngle(float horizontal, float vertical);
+
+		//void changeHorizontalAngle(bool left);
+		//void changeVerticalAngle(bool up);
+		//void changeDistance(bool closer);
 
 		float getDistance()
 		{

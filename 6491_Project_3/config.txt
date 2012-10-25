@@ -1,4 +1,4 @@
-3
+5
 # Config File! Now with comments! And Spaces!
 
 section window 6
@@ -15,11 +15,53 @@ refresh_rate 30.0f
 
 end_section
 
-section camera 13
+section colours 16
 
-distance 6.0
-horizontal_angle 0.0f
+sphere_r 0.0f
+sphere_g 0.0f
+sphere_b 0.8f
+sphere_a 1.0f
+
+destroyer_r 0.0f
+destroyer_g 1.0f
+destroyer_b 0.0f
+destroyer_a 1.0f
+
+bg_colour_r 0.0f
+bg_colour_g 0.0f
+bg_colour_b 0.0f
+bg_colour_a 0.0f
+
+plane_r 0.65f
+plane_g 0.65f
+plane_b 0.0f
+plane_a 1.0f
+
+end_section
+
+section moveSpeed 7
+
+forward_speed 0.95f
+backward_speed 0.85f
+	
+left_speed 0.85f	
+right_speed 0.85f	
+	
+up_speed 1.25f
+down_speed 1.0f
+	
+pan_speed 0.65f
+	
+end_section
+
+section camera 15
+
+horizontal_angle 90.0f
 vertical_angle 90.0f
+
+camera_start_x 0.0f
+camera_start_y 0.0f
+camera_start_z -5.0f
 
 camera_up_vector_x 0.0f
 camera_up_vector_y 1.0f
@@ -37,24 +79,15 @@ invert_y false
 
 end_section
 
-section spawn 6
-
-disk_one_radius 1.5f
-
-disk_two_distance 2.0f
-disk_two_radius 1.5f
+section spawn 7
+cone_length 3.0f
+cone_radius 2.0f
 
 spawn_count 1
 spawn_radius 1.0f
 spawn_speed 0.05f
 
-end_section
-
-section colours 4
-
-bg_colour_r 0.0f
-bg_colour_g 0.0f
-bg_colour_b 0.0f
-bg_colour_a 0.0f
+scroll_factor 0.15f
+plane_scroll 0.25f
 
 end_section

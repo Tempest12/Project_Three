@@ -8,6 +8,7 @@
 #include "Vector3f.hpp"
 #include "Colour4f.hpp"
 #include "Core.hpp"
+#include "Config.hpp"
 
 class Sphere
 {
@@ -20,6 +21,7 @@ class Sphere
 		float radius;
 		Colour4f* colour;
 		bool moving;
+		bool destroyer;
 
 	protected:
 	private:
@@ -34,8 +36,9 @@ class Sphere
 			this -> acceleration = new Vector3f();
 
 			this -> radius = 1.0f;
-			this -> colour = new Colour4f();
+			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
+			this -> destroyer = false;
 		}
 
 		Sphere(float radius)
@@ -45,8 +48,9 @@ class Sphere
 			this -> acceleration = new Vector3f(0.0f);
 
 			this -> radius = radius;
-			this -> colour = new Colour4f();
+			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
+			this -> destroyer = false;
 		}
 
 		Sphere(float x, float y, float z)
@@ -56,8 +60,9 @@ class Sphere
 			this -> acceleration = new Vector3f();
 
 			this -> radius = 1.0f;
-			this -> colour = new Colour4f();
+			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
+			this -> destroyer = false;
 		}
 
 		Sphere(float x, float y, float z, float radius)
@@ -67,19 +72,42 @@ class Sphere
 			this -> acceleration = new Vector3f();
 
 			this -> radius = radius;
-			this -> colour = new Colour4f();
-			this -> moving = true;
+			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
+			this -> moving = false;
+			this -> destroyer = false;
 		}
 
-		Sphere(Vector3f* position, Vector3f* velocity, float radius)
+		Sphere(Vector3f* position, Vector3f* velocity, float radius, bool destroyer)
 		{
 			this -> position = new Vector3f(position);
 			this -> velocity = new Vector3f(velocity);
 			this -> acceleration = new Vector3f();
 
 			this -> radius = radius;
-			this -> colour = new Colour4f();
 			this -> moving = true;
+			this -> destroyer = destroyer;
+
+			if(this->destroyer)
+			{
+				colour = new Colour4f(convertSettingToFloat("colours", "destroyer_r"), convertSettingToFloat("colours", "destroyer_g"), convertSettingToFloat("colours", "destroyer_b"), convertSettingToFloat("colours", "destroyer_a"));
+			}
+			else
+			{
+				colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
+			}
+		}
+
+		Sphere(Vector3f* position, float radius, Colour4f* colour)
+		{
+			this -> position = new Vector3f(position);
+			this -> velocity = new Vector3f();
+			this -> acceleration = new Vector3f();
+
+			this->colour = new Colour4f(colour);
+
+			this -> radius = radius;
+			this -> moving = false;
+			this -> destroyer = false;
 		}
 
 		Sphere(Sphere* that)
@@ -91,6 +119,7 @@ class Sphere
 			this -> radius = that -> radius;
 			this -> colour = new Colour4f(that -> colour);
 			this -> moving = that -> moving;
+			this -> destroyer = that -> destroyer;
 		}
 
 		/*~Sphere(void)
@@ -130,8 +159,11 @@ class Sphere
 			//Colour
 
 			glPushMatrix();
+			{
+				glColor3f(this->colour->red, this->colour->green, this->colour->blue);
 				glTranslatef(position -> x, position -> y, position -> z);
-				glutSolidSphere(this -> radius, 15, 15);
+				glutSolidSphere(this -> radius, 17, 17);
+			}
 			glPopMatrix();
 		}
 

@@ -1,5 +1,6 @@
 #include <windows.h>
 
+#include <list>
 #include <FL/Fl.H>
 #include <FL/Gl.h>
 #include <GL/GLu.h>
@@ -26,6 +27,20 @@ float diskTwoRadius;
 int spawnCount;
 float spawnRadius;
 float spawnSpeed;
+
+float scrollFactor;
+
+int oldMouseX;
+int oldMouseY;
+
+//bool shiftDown = false;
+bool displayPlane = false;
+
+int planeSize = 15;
+Sphere plane [15][15];
+float planeDistance = 10.0f;
+Colour4f planeColour;
+float planeScroll;
 
 RenderWindow::RenderWindow() : Fl_Gl_Window(0, 0, "")
 {
@@ -54,10 +69,24 @@ void RenderWindow::initGraphcs()
 	spawnCount = convertSettingToFloat("spawn", "spawn_count");
 	spawnRadius = convertSettingToFloat("spawn", "spawn_radius");
 	spawnSpeed = convertSettingToFloat("spawn", "spawn_speed");
+	
+	//std::cout << spawnRadius;
+	scrollFactor = convertSettingToFloat("spawn", "scroll_factor");
+	planeScroll = convertSettingToFloat("spawn", "plane_scroll");
 
 	Sphere first = Sphere(spawnRadius);
 	first.moving = false;
 	sphereList -> push_back(first);
+
+	for(int x = 0; x < planeSize; x++)
+	{
+		for(int y = 0; y < planeSize; y++)
+		{
+			plane[x][y] = Sphere(spawnRadius);
+		}
+	}
+
+	planeColour = Colour4f(convertSettingToFloat("colours", "plane_r"), convertSettingToFloat("colours", "plane_g"), convertSettingToFloat("colours", "plane_b"), convertSettingToFloat("colours", "plane_a"));
 }
 
 void RenderWindow::update(void)
@@ -65,6 +94,7 @@ void RenderWindow::update(void)
 	//Calculates the new position of the camera if it has moved
 	camera -> calculateCamera();
 	gluLookAt(camera -> position -> x, camera -> position -> y, camera -> position->z, camera -> focusPoint -> x, camera -> focusPoint -> y, camera -> focusPoint -> z, camera -> upVector -> x, camera -> upVector -> y, camera -> upVector -> z);
+	//gluLookAt(0.0f, 0.0f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	//Do Update Call on each sphere.
 	for(int index = 0; index < sphereList -> size(); index++)
@@ -88,7 +118,88 @@ void RenderWindow::update(void)
 
 			if(temp)
 			{
+				//If One sphere is a destroyer we wipe out both
+				if((*sphereList)[indexOne].destroyer || (*sphereList)[indexTwo].destroyer)
+				{
+					sphereList->erase(sphereList->begin() + indexTwo);
+					sphereList->erase(sphereList->begin() + indexOne - 1);
+
+					indexOne--;
+					indexTwo--;
+				}
 				break;
+			}
+		}
+	}
+
+	if(displayPlane)
+	{
+		//Calculate the center:
+		Vector3f* lookVector = MyVector::subtract(camera->focusPoint, camera->position);
+		lookVector->normalize();
+		lookVector->scale(planeDistance);
+
+		Vector3f* down = MyVector::crossProduct(lookVector, camera->upVector);
+		Vector3f* across = MyVector::crossProduct(lookVector, down);
+		down->normalize();
+		across->normalize();
+
+		down->scale(spawnRadius * 2);
+		across->scale(spawnRadius * 2);
+
+		Vector3f start = Vector3f();
+		start.subtract(down);
+		start.subtract(across);
+		start.normalize();
+		start.scale(planeSize * spawnRadius);
+		start.add(lookVector);
+		Vector3f restart = Vector3f(start);
+
+		Vector3f xPosition = Vector3f();
+		Vector3f yPosition = Vector3f();
+
+		for(int x = 0; x < planeSize; x++)
+		{
+			for(int y = 0; y < planeSize; y++)
+			{
+				start = Vector3f(restart);
+
+				xPosition = Vector3f(across);
+				yPosition = Vector3f(down);
+
+				xPosition.scale(x);
+				yPosition.scale(y);
+
+				start.add(&xPosition);
+				start.add(&yPosition);
+
+				start.add(camera->position);
+
+				plane[x][y] = Sphere(&start, spawnRadius, &planeColour);
+			}
+		}
+
+		delete lookVector;
+		delete down;
+		delete across;
+
+		Sphere temp;
+
+		for(int listIndex = 0; listIndex < (int)sphereList->size(); listIndex++)
+		{
+			
+
+			if((*sphereList)[listIndex].moving == false || (*sphereList)[listIndex].destroyer)
+			{
+				continue;
+			}
+
+			for(int x = 0; x < planeSize; x++)
+			{
+				for(int y = 0; y < planeSize; y++)
+				{
+					this->collisionDetectAndRespond(&(*sphereList)[listIndex], &(plane[x][y]));
+				}
 			}
 		}
 	}
@@ -117,6 +228,36 @@ void RenderWindow::draw()
 	{
 		(*sphereList)[index].draw();
 	}
+
+	if(Fl::event_shift())
+	{
+		Vector3f* direction = MyVector::subtract(camera->focusPoint, camera->position);
+
+		direction->normalize();
+		direction->scale(12);
+		direction->add(camera->position);
+
+		glPushMatrix();
+		{
+			glColor3f(1.0f, 0.0f, 1.0f);
+			glTranslatef(direction->x, direction->y, direction->z);
+			glutSolidSphere(spawnRadius, 17, 17);			
+		}
+		glPopMatrix();
+
+		delete direction;
+	}
+
+	if(displayPlane)
+	{
+		for(int x = 0; x < planeSize; x++)
+		{
+			for(int y = 0; y < planeSize; y++)
+			{
+				plane[x][y].draw();
+			}
+		}
+	}
 }
 
 int RenderWindow::handle(int event)
@@ -124,19 +265,66 @@ int RenderWindow::handle(int event)
 	switch(event)
 	{
 		case FL_PUSH: //Mouse Down
-			//std::cout << "Shout out to my PEEPS!!!" << std::endl;
 
-			//Calling Sphere Spawn
-			spawnSpheres();
+			//Left CLick to add spheres
+			if(Fl::event_button() == 1/*LEFT*/)
+			{
+				//std::cout << "hi";
+				spawnSpheres(false, Fl::event_x(), Fl::event_y());
+			}
+			//Middle CLick rotate camera
+			else if(Fl::event_button() == 2/*Middle*/) 
+			{
+				
+			}
+			//Right CLick to take away Spheres
+			else if(Fl::event_button() == 3/*Right*/)
+			{
+				spawnSpheres(true, Fl::event_x(), Fl::event_y());
+			}
+
+
+			break;
+	
+		case FL_MOVE:
+			oldMouseX = Fl::event_x();
+			oldMouseY = Fl::event_y();
 
 			break;
 
 		case FL_DRAG: //Mouse Drag
-		
+			if(Fl::event_button2())
+			{
+				this->camera->changeAngle(Fl::event_x() - oldMouseX, Fl::event_y() - oldMouseY);
+			}
+			//std::cout << "X: " <<Fl::event_x << std::endl;
+			//std::cout << "Y: " <<Fl::event_y << std::endl;
+
+			oldMouseX = Fl::event_x();
+			oldMouseY = Fl::event_y();
+
 			break;
 
 		case FL_RELEASE: //Mouse Release
 			
+			break;
+
+		case FL_MOUSEWHEEL:
+
+			if(Fl::event_shift())
+			{
+			    spawnRadius -= (float)Fl::event_dy() * scrollFactor;
+				if(spawnRadius < 0.1f)
+				{
+					spawnRadius = 0.1f;	
+				}
+			}
+			if(Fl::event_ctrl())
+			{
+				planeDistance -= (float)Fl::event_dy() * planeScroll;
+			}
+			//std::cout << spawnRadius;
+
 			break;
 
 		case FL_KEYBOARD:
@@ -147,48 +335,42 @@ int RenderWindow::handle(int event)
 			switch(key)
 			{
 				case 'a':
-					//std::cout << 'a' << std::endl;
-					camera -> changeHorizontalAngle(true);
+					camera->moveLeft();
 					break;
 
 				case 's':
 					//std::cout << 's' << std::endl;
-					if(convertSettingToBool("camera", "invert_y"))
-					{
-						camera -> changeVerticalAngle(true);
-					}
-					else
-					{
-						camera -> changeVerticalAngle(false);
-					}
+					camera->moveBackward();
 					break; 
 
 				case 'd':
 					//std::cout << 'd' << std::endl;
-					camera -> changeHorizontalAngle(false);
+					camera->moveRight();
 					break;
 
 				case 'w':
 					//std::cout << 'w' << std::endl;
-					if(convertSettingToBool("camera", "invert_y"))
-					{
-						camera -> changeVerticalAngle(false);
-					}
-					else
-					{
-						camera -> changeVerticalAngle(true);
-					}
+					camera->moveForward();
 					break;
 
 				case 'q':
 					//std::cout << 'q' << std::endl;
-					camera -> changeDistance(false);
+					//camera -> changeDistance(false);
 					break;
 
 				case 'e':
 					//std::cout << 'e' << std::endl;
-					camera -> changeDistance(true);
+					//camera -> changeDistance(true);
 					break;
+				case ' ':
+					displayPlane = !displayPlane;
+					break;
+				/*default:
+					if(Fl::event_shift())
+					{
+						shiftDown = true;
+					}
+					break;*/
 			}
 
 			break;
@@ -197,40 +379,32 @@ int RenderWindow::handle(int event)
 	return 0;
 }
 
-void RenderWindow::spawnSpheres()
+void RenderWindow::spawnSpheres(bool destroyer, int mouseX, int mouseY)
 {
 	//std::cout << "Count is: " << spawnCount << std::endl;
+	Vector3f* start = new Vector3f(camera->focusPoint);
+	Vector3f* direction = new Vector3f();
 
 	for(int count = 0; count < spawnCount; count++)
 	{
 		Sphere* temp;
 
-		//Determine Starting Location
-		float spawnDistance = (float)rand() / (float)RAND_MAX;
-		float spawnAngle = (float)rand() / (float)RAND_MAX;
+		direction->copy(camera->focusPoint);
+		direction->subtract(camera->position);
+		direction->normalize();
+		direction->scale(spawnSpeed);
 
-		Vector3f* directionVector = MyVector::subtract(camera -> position, camera -> focusPoint);
-		directionVector -> normalize();
-
-		Vector3f* diskOnePosition = MyVector::scale(directionVector, camera -> getDistance() - diskOneRadius);
-		Vector3f* diskTwoPosition = MyVector::scale(directionVector, camera -> getDistance() - diskOneRadius - diskTwoRadius);
-
-		//Vector3f* otherDirectionVector = new Vector(
-
-		Vector3f* startVelocity = MyVector::subtract(diskTwoPosition, diskOnePosition);
-		startVelocity -> normalize();
-		startVelocity -> scale(spawnSpeed);
-
-		temp = new Sphere(diskOnePosition, startVelocity, spawnRadius);
+		temp = new Sphere(start, direction, abs(spawnRadius), destroyer);
 
 		//Add to list and let's move on
 		sphereList ->push_back(temp);
-
-		delete directionVector; 
-		delete diskOnePosition;
-		delete diskTwoPosition;
-		delete startVelocity;
 	}
+
+	//start->print();
+	//direction->print();
+
+	delete start;
+	delete direction;
 }
 
 bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)

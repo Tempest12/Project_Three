@@ -35,7 +35,7 @@ class RenderWindow : public Fl_Gl_Window
 
 	protected:
 	private:
-		void spawnSpheres(void);
+		void spawnSpheres(bool destroyer, int mouseX, int mouseY);
 
 		bool collisionDetectAndRespond(Sphere* one, Sphere* two);
 };

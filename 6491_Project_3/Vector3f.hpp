@@ -2,6 +2,7 @@
 #define _VECTOR3F_HPP
 
 #include <math.h>
+#include <iostream>
 
 class Vector3f
 {
@@ -144,7 +145,12 @@ class Vector3f
 		{
 			return ((this -> x == that -> x) && (this -> y == that -> y) && (this -> z == that -> z));
 		} 
-	
+		
+		inline void print()
+		{
+			std::cout << "X: " << this->x << " Y: " << this->y << " Z: " << this->z << std::endl;
+		}
+
 	protected:
 	private:
 };
@@ -161,5 +167,7 @@ namespace MyVector
 	Vector3f* normalize(Vector3f* vector);
 
 	Vector3f* crossProduct(Vector3f* one, Vector3f* two);
+
+	void rotateVectorByAngle(Vector3f* vector, float angle);
 };
 #endif
