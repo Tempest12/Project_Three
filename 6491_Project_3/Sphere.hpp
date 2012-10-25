@@ -4,11 +4,13 @@
 #include <windows.h>
 #include <GL/GL.h>
 #include <GL/glut.h>
+#include <vector>
 
 #include "Vector3f.hpp"
 #include "Colour4f.hpp"
 #include "Core.hpp"
 #include "Config.hpp"
+
 
 class Sphere
 {
@@ -22,6 +24,7 @@ class Sphere
 		Colour4f* colour;
 		bool moving;
 		bool destroyer;
+		std::vector<Sphere>* touching;
 
 	protected:
 	private:
@@ -39,6 +42,7 @@ class Sphere
 			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
 			this -> destroyer = false;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		Sphere(float radius)
@@ -51,6 +55,7 @@ class Sphere
 			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
 			this -> destroyer = false;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		Sphere(float x, float y, float z)
@@ -63,6 +68,7 @@ class Sphere
 			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = true;
 			this -> destroyer = false;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		Sphere(float x, float y, float z, float radius)
@@ -75,6 +81,7 @@ class Sphere
 			colour = new Colour4f(convertSettingToFloat("colours", "sphere_r"), convertSettingToFloat("colours", "sphere_g"), convertSettingToFloat("colours", "sphere_b"), convertSettingToFloat("colours", "sphere_a"));
 			this -> moving = false;
 			this -> destroyer = false;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		Sphere(Vector3f* position, Vector3f* velocity, float radius, bool destroyer)
@@ -86,6 +93,7 @@ class Sphere
 			this -> radius = radius;
 			this -> moving = true;
 			this -> destroyer = destroyer;
+			this -> touching = new std::vector<Sphere>();
 
 			if(this->destroyer)
 			{
@@ -108,6 +116,7 @@ class Sphere
 			this -> radius = radius;
 			this -> moving = false;
 			this -> destroyer = false;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		Sphere(Sphere* that)
@@ -120,6 +129,7 @@ class Sphere
 			this -> colour = new Colour4f(that -> colour);
 			this -> moving = that -> moving;
 			this -> destroyer = that -> destroyer;
+			this -> touching = new std::vector<Sphere>();
 		}
 
 		/*~Sphere(void)
@@ -167,11 +177,40 @@ class Sphere
 			glPopMatrix();
 		}
 
+		void addConnection(Sphere* newTouching)
+		{
+			this->touching->push_back(newTouching);
+		}
+
+		void removeSphereFromTouching(Sphere* dead)
+		{
+			for(int index = 0; index < touching->size(); index++)
+			{
+				if(dead == &(*touching)[index])
+				{
+					touching->erase(touching->begin() + index);
+					return;
+				}
+			}
+		}
+
+		void removeAllConnections()
+		{
+			for(int index = 0; index < touching->size(); index++)
+			{
+				(*touching)[index].removeSphereFromTouching(this);
+			}
+		}
+
 		void addForce(void)
 		{
 
 		}
 
+		bool operator ==(Sphere* that)
+		{
+			return ((this->position == that->position) && (this->radius == that ->radius));
+		}
 	protected:
 	private:
 };

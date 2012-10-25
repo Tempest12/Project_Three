@@ -41,6 +41,4 @@ void test(void)
 	Vector3f* temp = new Vector3f(1, 0, 0);
 
 	MyVector::rotateVectorByAngle(temp, 90);
-
-	temp->print();
 }

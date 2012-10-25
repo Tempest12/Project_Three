@@ -40,6 +40,10 @@ class RenderWindow : public Fl_Gl_Window
 	private:
 		void spawnSpheres(bool destroyer, int mouseX, int mouseY);
 
-		bool collisionDetectAndRespond(Sphere* one, Sphere* two);
+		bool collisionDetectAndRespond(Sphere* one, Sphere* two, int indexOne, int indexTwo);
+
+		void slideNewConnection(Sphere* moving, Sphere* station, int movingIndex, int stationIndex, Vector3f* restPoint);
+
+		bool checkForCollisions(Vector3f* position, int ignoreOne, int ignoreTwo);
 };
 #endif

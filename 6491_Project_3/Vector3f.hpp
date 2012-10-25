@@ -176,5 +176,7 @@ namespace MyVector
 	Vector3f* crossProduct(Vector3f* one, Vector3f* two);
 
 	void rotateVectorByAngle(Vector3f* vector, float angle);
+
+	Vector3f midPoint(Vector3f* one, Vector3f* two);
 };
 #endif

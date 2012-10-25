@@ -43,6 +43,8 @@ float planeDistance = 10.0f;
 Colour4f planeColour;
 float planeScroll;
 
+float sineOfSixty;
+
 RenderWindow::RenderWindow() : Fl_Gl_Window(0, 0, "")
 {
 	camera = new Camera();
@@ -89,6 +91,8 @@ void RenderWindow::initGraphcs()
 
 	mesh->loadMesh("../models/tetra.vts");
 	mesh->saveMesh("../models/retet.vts");
+
+	sineOfSixty = sin(60 * degreeToRadian);
 }
 
 void RenderWindow::update(void)
@@ -116,7 +120,7 @@ void RenderWindow::update(void)
 
 		for(int indexTwo = indexOne - 1; indexTwo >= 0; indexTwo--)
 		{
-			bool temp = collisionDetectAndRespond(&(*sphereList)[indexOne], &(*sphereList)[indexTwo]);
+			bool temp = collisionDetectAndRespond(&(*sphereList)[indexOne], &(*sphereList)[indexTwo], indexOne, indexTwo);
 
 			if(temp)
 			{
@@ -126,9 +130,28 @@ void RenderWindow::update(void)
 					sphereList->erase(sphereList->begin() + indexTwo);
 					sphereList->erase(sphereList->begin() + indexOne - 1);
 
+					if((*sphereList)[indexOne].destroyer == false)
+					{
+						(*sphereList)[indexOne].removeAllConnections();	
+					}
+					else if((*sphereList)[indexTwo].destroyer == false)
+					{
+						(*sphereList)[indexTwo].removeAllConnections();
+					}
+					else
+					{
+						//What?
+					}
+
 					indexOne--;
 					indexTwo--;
 				}
+				else
+				{
+					(*sphereList)[indexOne].addConnection(&(*sphereList)[indexTwo]);
+					(*sphereList)[indexTwo].addConnection(&(*sphereList)[indexOne]);
+				}
+
 				break;
 			}
 		}
@@ -200,7 +223,7 @@ void RenderWindow::update(void)
 			{
 				for(int y = 0; y < planeSize; y++)
 				{
-					this->collisionDetectAndRespond(&(*sphereList)[listIndex], &(plane[x][y]));
+					this->collisionDetectAndRespond(&(*sphereList)[listIndex], &(plane[x][y]), -1, -1);
 				}
 			}
 		}
@@ -411,12 +434,18 @@ void RenderWindow::spawnSpheres(bool destroyer, int mouseX, int mouseY)
 	delete direction;
 }
 
-bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)
+bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two, int indexOne, int indexTwo)
 {
 	float distance = sqrt((one->position->x - two->position->x) * (one->position->x - two->position->x) + (one->position->y - two->position->y) * (one->position->y - two->position->y) + (one->position->z - two->position->z) * (one->position->z - two->position->z));
 
 	if(distance < one->radius + two->radius)
 	{
+		//Don't bother responding if eihter is a destroyer.
+		if(one->destroyer || two->destroyer)
+		{
+			return true;
+		}
+
 		//So respond to the collision
 		//by sliding the moving sphere backwards until the collision is a non factor.
 		if(one->moving && two->moving)
@@ -433,6 +462,11 @@ bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)
 
 			restPoint->add(two->position);
 
+			if(two->touching->size() > 0)
+			{
+				slideNewConnection(one, two, indexOne, indexTwo, restPoint);
+			}
+
 			one->position->copy(restPoint);
 			one->moving = false;
 
@@ -447,6 +481,11 @@ bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)
 
 			restPoint->add(one->position);
 
+			if(one->touching->size() > 0)
+			{
+				slideNewConnection(two, one, indexTwo, indexOne, restPoint);
+			}
+
 			two->position->copy(restPoint);
 			two->moving = false;
 
@@ -459,4 +498,135 @@ bool RenderWindow::collisionDetectAndRespond(Sphere* one, Sphere* two)
 	{
 		return false;
 	}
+}
+
+
+
+void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movingIndex, int stationIndex, Vector3f* restPoint)
+{
+	vector<Sphere>* touchingList = station->touching; 
+
+	Sphere* tempSphere;
+	Vector3f tempPosition;
+
+	Vector3f midPoint;
+	Vector3f* upHeight;
+	Vector3f* downHeight;
+
+	Vector3f* planeNormal;
+	//Vector3f* secondCross;
+
+	Vector3f planeOne;
+	Vector3f planeTwo;
+
+	Vector3f cVector;
+
+	float up = 0.0f;
+	float down = 0.0f;
+
+	bool found = false;
+
+	for(int index = 0; index < touchingList->size() && !found; index++)
+	{
+		tempSphere = &(*touchingList)[index];
+
+		//Calculate MidPoint
+		midPoint = MyVector::midPoint(tempSphere->position, station->position);
+		
+		//Calculate the Plane of the midpoint
+		planeOne = Vector3f(moving->position->x - station->position->x, moving->position->y - station->position->y, moving->position->z - station->position->z);
+		planeTwo = Vector3f(tempSphere->position->x - station->position->x, tempSphere->position->y - station->position->y, tempSphere->position->z - station->position->z); 
+
+		//Get the normal of that Plane
+		planeNormal = MyVector::crossProduct(&planeOne, &planeTwo);
+
+		//Calculate the first H vector
+		upHeight = MyVector::crossProduct(planeNormal, &planeTwo);
+		upHeight->normalize();
+		upHeight->scale(sineOfSixty/(2 * spawnRadius));
+
+		downHeight = new Vector3f(-upHeight->x, -upHeight->y, -upHeight->z);
+
+		up = planeOne.dotProduct(upHeight);
+		down = planeTwo.dotProduct(downHeight);
+
+		if(up == 0.0f && down == 0.0f)
+		{
+			//let's just use up... 
+			//Calculate the new would be point
+			tempPosition = Vector3f(midPoint.x + upHeight->x, midPoint.y + upHeight->y, midPoint.z + upHeight->z);
+			
+			//Is this point a valid postion? IE no collisions
+			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			{
+				continue;
+			}
+			
+			//False means there were no collisions
+			restPoint->copy(&tempPosition);
+			found = true;
+		}
+		else if(up > 0.0f && down < 0.0f)
+		{
+			//Calculate the new would be point
+			tempPosition = Vector3f(midPoint.x + upHeight->x, midPoint.y + upHeight->y, midPoint.z + upHeight->z);
+			
+			//Is this point a valid postion? IE no collisions
+			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			{
+				continue;
+			}
+			
+			//False means there were no collisions
+			restPoint->copy(&tempPosition);
+			found = true;
+		}
+		else if(up < 0.0f && down > 0.0f)
+		{
+			//Calculate the new would be point
+			tempPosition = Vector3f(midPoint.x + downHeight->x, midPoint.y + downHeight->y, midPoint.z + downHeight->z);
+			
+			//Is this point a valid postion? IE no collisions
+			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			{
+				continue;
+			}
+			
+			//False means there were no collisions
+			restPoint->copy(&tempPosition);
+			found = true;
+		}
+		else
+		{
+			//This should never ever happen
+			std::cout << "We have a problem both H vectors we negative" << std::endl;
+		}
+
+		//delete secondCross;
+		delete planeNormal;
+		delete upHeight;
+		delete downHeight;
+	}
+}
+
+bool RenderWindow::checkForCollisions(Vector3f* tempPosition, int ignoreOne, int ignoreTwo)
+{
+	for(int index = 0; index < sphereList->size(); index++)
+	{
+		if(index == ignoreOne || index == ignoreTwo)
+		{
+			continue;
+		}
+
+		//Now check for a possible collision
+		//float distance = sqrt((one->position->x - two->position->x) * (one->position->x - two->position->x) + (one->position->y - two->position->y) * (one->position->y - two->position->y) + (one->position->z - two->position->z) * (one->position->z - two->position->z));
+		float distance = sqrt((tempPosition->x - (*sphereList)[index].position->x) * (tempPosition->x - (*sphereList)[index].position->x) + (tempPosition->y - (*sphereList)[index].position->y) * (tempPosition->y - (*sphereList)[index].position->y) + (tempPosition->z - (*sphereList)[index].position->z) * (tempPosition->z - (*sphereList)[index].position->z));  
+
+		if(distance < spawnRadius * 2)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

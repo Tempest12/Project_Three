@@ -68,3 +68,10 @@ void MyVector::rotateVectorByAngle(Vector3f* vector, float angle)
 
 	delete temp;
 }
+
+Vector3f MyVector::midPoint(Vector3f* one, Vector3f* two)
+{
+	return Vector3f((one->x + two->x) * 0.5f, (one->y + two->y) * 0.5f, (one->z + two->z) * 0.5f);
+
+	//return;
+}
