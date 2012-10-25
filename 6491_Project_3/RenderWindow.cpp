@@ -600,6 +600,9 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 		{
 			//This should never ever happen
 			std::cout << "We have a problem both H vectors we negative" << std::endl;
+			std::cout << *(station->position) << "        " << *(moving->position) << std::endl;
+			std::cout << planeOne << "       " << planeTwo << std::endl;
+			std::cout << *upHeight << "       " << *downHeight << std::endl;
 		}
 
 		//delete secondCross;
