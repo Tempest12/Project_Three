@@ -15,6 +15,7 @@
 #include "Core.hpp"
 #include "Config.hpp"
 #include "Sphere.hpp"
+#include "CornerMesh.h"
 
 std::vector<Sphere>* sphereList;
 
@@ -45,6 +46,13 @@ float planeScroll;
 RenderWindow::RenderWindow() : Fl_Gl_Window(0, 0, "")
 {
 	camera = new Camera();
+	mesh = new CornerMesh();
+}
+
+RenderWindow::~RenderWindow()
+{
+	delete camera;
+	delete mesh;
 }
 
 RenderWindow::RenderWindow(int width, int height, char* title) : Fl_Gl_Window(width, height, title)
@@ -52,6 +60,7 @@ RenderWindow::RenderWindow(int width, int height, char* title) : Fl_Gl_Window(wi
    mode(FL_RGB | FL_ALPHA | FL_DEPTH | FL_DOUBLE);
 
    camera = new Camera();
+   mesh = new CornerMesh();
 }
 
 void RenderWindow::initGraphcs()
@@ -78,15 +87,8 @@ void RenderWindow::initGraphcs()
 	first.moving = false;
 	sphereList -> push_back(first);
 
-	for(int x = 0; x < planeSize; x++)
-	{
-		for(int y = 0; y < planeSize; y++)
-		{
-			plane[x][y] = Sphere(spawnRadius);
-		}
-	}
-
-	planeColour = Colour4f(convertSettingToFloat("colours", "plane_r"), convertSettingToFloat("colours", "plane_g"), convertSettingToFloat("colours", "plane_b"), convertSettingToFloat("colours", "plane_a"));
+	mesh->loadMesh("../models/tetra.vts");
+	mesh->saveMesh("../models/retet.vts");
 }
 
 void RenderWindow::update(void)
@@ -220,6 +222,8 @@ void RenderWindow::draw()
 	update();
 
 	glColor3f(0.0f, 0.0f, 0.8f);
+
+	mesh->renderMesh();
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
