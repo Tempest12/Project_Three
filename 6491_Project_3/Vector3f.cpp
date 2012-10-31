@@ -76,7 +76,40 @@ Vector3f MyVector::midPoint(Vector3f* one, Vector3f* two)
 	//return;
 }
 
+<<<<<<< HEAD
 float MyVector::distance(Vector3f* one, Vector3f* two)
 {
 	return ((one->x - two ->x) * (one->x - two ->x) + (one->y - two ->y) * (one->y - two ->y) + (one->z - two ->z) * (one->z - two ->z));
+=======
+float MyVector::angleBetween(Vector3f& one, Vector3f& two, Vector3f& ref)
+{
+	float cosine = (one.dotProduct(&two))/(one.magnitude()*two.magnitude());
+	
+	Vector3f cross = *(MyVector::crossProduct(&one, &two));
+
+	float sine = cross.magnitude()/(one.magnitude()*two.magnitude());
+
+	if(sine == 0)
+	{
+		if(cosine == 1)
+			return 0;
+		else
+			return 3.14159265;
+	}
+
+	int sign = 0;
+	float direction = cross.dotProduct(&ref);
+
+	if(direction < 0)
+		sign = -1;
+	else
+		sign = 1;
+
+	float angle = sign*(float)atan2(sine, cosine);
+
+	if(angle < 0)
+		angle += 2*3.14159265;
+
+	return angle;
+>>>>>>> 79869e1f3bed253040f8639b797cb456b6dc2e23
 }

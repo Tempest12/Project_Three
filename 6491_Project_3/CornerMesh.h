@@ -30,8 +30,11 @@ class CornerMesh
 
 		map<int,int> sphereToG;
 
-
+		//e1 and e2 should be the clockwise orientation of the vertexes within the triangle
+		//This will rotate the roller counter-clockwise
 		int pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere& roller);
+		bool containsTriangle(int v1, int v2, int v3);
+		int reverseSphereToG(int G);
 
 	public:
 		CornerMesh()	

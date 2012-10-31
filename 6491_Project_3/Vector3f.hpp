@@ -179,6 +179,10 @@ namespace MyVector
 
 	Vector3f midPoint(Vector3f* one, Vector3f* two);
 
+<<<<<<< HEAD
 	float distance(Vector3f* one, Vector3f* two);
+=======
+	float angleBetween(Vector3f& one, Vector3f& two, Vector3f& ref);
+>>>>>>> 79869e1f3bed253040f8639b797cb456b6dc2e23
 };
 #endif

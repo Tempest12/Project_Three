@@ -249,14 +249,9 @@ void RenderWindow::draw()
 
 	glColor3f(0.0f, 0.0f, 0.8f);
 
+	if(showSpheres)
+	{
 
-	if(!showSpheres)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		mesh->renderMesh();
-	}
-	else
-	{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 			//Draw Spheres
@@ -284,11 +279,6 @@ void RenderWindow::draw()
 				delete direction;
 			}
 
-			for(int index = 0; index < blahList.size(); index++)
-			{
-				blahList[index].draw();
-			}
-
 			if(displayPlane)
 			{
 				for(int x = 0; x < planeSize; x++)
@@ -299,6 +289,19 @@ void RenderWindow::draw()
 					}
 				}
 			}
+	}
+	else
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		mesh->renderMesh();
+
+
+		/*for(int index = 0; index < sphereList -> size(); index++)
+		{
+			(*sphereList)[index].draw(0.25);
+		}*/
+
 	}
 }
 
@@ -408,9 +411,14 @@ int RenderWindow::handle(int event)
 					displayPlane = !displayPlane;
 					break;
 				case 'c':
-					mesh->shell(*sphereList, 1);
+					mesh->shell(*sphereList, 2);
 					showSpheres = false;
 					break;
+				case 'o':
+					mesh->loadMesh("../models/tetra.vts");
+					break;
+				case 'p':
+					mesh->saveMesh("../models/tetra.vts");
 				/*default:
 					if(Fl::event_shift())
 					{
