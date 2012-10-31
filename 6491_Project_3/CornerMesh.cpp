@@ -149,20 +149,25 @@ void CornerMesh::renderMesh()
 		Vector3f b = getVertex(i*3+1);
 		Vector3f c = getVertex(i*3+2);
 
-		glColor3f(0.0,0.5,0.0);
+		glColor3f(0.5,0.0,0.0);
 		glVertex3f(a.x, a.y, a.z);
+		glColor3f(0.0,0.5,0.0);
 		glVertex3f(b.x, b.y, b.z);
+		glColor3f(0.0,0.0,0.5);
 		glVertex3f(c.x, c.y, c.z);
 	}
 	glEnd();
 	glFlush(); //not sure if needed
 }
 
+
+//e1 and e2 should be the clockwise orientation of the vertexes within the triangle
+//This will rotate the roller counter-clockwise
 int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere& roller)
 {
 	const float PI = 3.14159265;
 	int earliestI = -1;
-	float earliestTrajectory = PI;
+	float earliestTrajectory = 2*PI;
 	Vector3f bestPos = Vector3f(roller.position);
 
 	Sphere a = spheres[e1];
@@ -177,7 +182,7 @@ int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere&
 		Sphere c = spheres[i];
 
 		Vector3f midToC = Vector3f(c.position->x - mid.x, c.position->y - mid.y, c.position->z - mid.z);
-		if(midToC.magnitude() >= 2*roller.radius)
+		if(midToC.magnitude() >= 2*roller.radius || i == e1 || i == e2)
 			continue;
 
 		//Sphere-plane intersection
@@ -212,6 +217,7 @@ int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere&
 		float af = I.magnitude();
 		I.normalize();
 		Vector3f J = Vector3f(MyVector::crossProduct(&planeNormal, &I));
+		J.normalize();
 
 		float x = 0.5*(af + (trajectoryRadius*trajectoryRadius - r*r)/af);
 		float y = sqrt(trajectoryRadius*trajectoryRadius - x*x);
@@ -220,7 +226,7 @@ int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere&
 
 		Vector3f toCurrentPos = Vector3f(currentPos.x - mid.x, currentPos.y - mid.y, currentPos.z - mid.z);
 
-		float angle = acos(trajectory.dotProduct(&toCurrentPos));
+		float angle = MyVector::angleBetween(trajectory, toCurrentPos, Vector3f(-planeNormal.x, -planeNormal.y, -planeNormal.z));
 
 		if(angle < earliestTrajectory)
 		{
@@ -274,6 +280,7 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 	OTable.push_back(VTable.size()-1);
 
 	Sphere roller = Sphere(a.position->x, a.position->y+rollerRadius, a.position->z, rollerRadius);
+	roller.moving = false;
 
 	//Find an initial edge
 	int secondSphereIndex = highestYIndex;
@@ -301,7 +308,9 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 		h1.normalize();
 
 		//Check which one to use
-		float angle = acos(h1.dotProduct(&oldToRoller));
+		float angle = acos(h1.dotProduct(&oldToRoller)/(oldToRoller.magnitude()));
+
+		//cout << h1.dotProduct(&oldToRoller)/(oldToRoller.magnitude()) << "   " << angle << endl;
 
 		if(angle < minAngle)
 		{
@@ -335,7 +344,6 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 	OTable.push_back(VTable.size()-1);
 
 
-
 	//Create seed triangle
 	int thirdSphereIndex = pivotAroundEdge(spheres, highestYIndex, secondSphereIndex, roller);
 	if(thirdSphereIndex == -1)
@@ -348,4 +356,93 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 	VTable.push_back(GTable.size()-1);
 	OTable.push_back(VTable.size()-1);
 	++numTriangles;
+
+	vector<Sphere> rollers = vector<Sphere>();
+	rollers.push_back(Sphere(roller));
+	
+
+
+
+	queue<int> bfs = queue<int>();
+	bfs.push(VTable.size()/3-1);
+
+
+	while(!bfs.empty())
+	{
+		int currentTri = bfs.front();
+		bfs.pop();
+
+		cout << "Current triangle: " << currentTri << endl;
+
+		for(int i = 0; i < 3; ++i)
+		{
+			int currentCorner = currentTri*3 + i;
+			int currentPrev = prevCorner(currentCorner);
+
+			Sphere roll = Sphere(&rollers[currentTri]);
+
+			int sphereIndex = pivotAroundEdge(spheres, reverseSphereToG(VTable[currentCorner]), reverseSphereToG(VTable[currentPrev]), roll);
+
+			if(sphereIndex == -1)
+				continue;
+
+			Sphere sph = spheres[sphereIndex];
+
+			//Check if already in GTable
+			if(sphereToG.find(sphereIndex) == sphereToG.end())
+			{
+				//Add to GTable
+				GTable.push_back(Vector3f(sph.position));
+				++numVerts;
+				sphereToG[sphereIndex] = GTable.size()-1;
+			}
+			
+
+			//Check if new triangle
+			if(!containsTriangle(VTable[currentCorner], VTable[currentPrev], sphereToG[sphereIndex]))
+			{
+				VTable.push_back(VTable[currentCorner]);
+				VTable.push_back(VTable[currentPrev]);
+				VTable.push_back(sphereToG[sphereIndex]);
+				++numTriangles;
+				rollers.push_back(roll);
+				cout << "Add Triangle " << currentCorner << ", " << currentPrev << ", " << sphereToG[sphereIndex] << endl;
+				bfs.push(numTriangles-1);
+			}
+		}
+	}
+	
+
+	/*for(int i = 0; i < rollers.size(); ++i)
+	{
+		spheres.push_back(rollers[i]);
+	}*/
+
+
+	cout << "Tris: " << numTriangles << endl;
+	cout << "Verts: " << numVerts << endl;
+}
+
+
+
+bool CornerMesh::containsTriangle(int v1, int v2, int v3)
+{
+	for(int i = 0; i < VTable.size(); ++i)
+	{
+		if(VTable[i] == v1 && ((VTable[nextCorner(i)] == v2 && VTable[prevCorner(i)] == v3) ||
+			(VTable[prevCorner(i)] == v2 && VTable[nextCorner(i)] == v3)))
+			return true;
+	}
+
+	return false;
+}
+
+int CornerMesh::reverseSphereToG(int G)
+{
+	for(map<int,int>::iterator it = sphereToG.begin(); it != sphereToG.end(); ++it)
+	{
+		if(it->second == G)
+			return it->first;
+	}
+	return -1;
 }

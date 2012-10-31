@@ -178,5 +178,7 @@ namespace MyVector
 	void rotateVectorByAngle(Vector3f* vector, float angle);
 
 	Vector3f midPoint(Vector3f* one, Vector3f* two);
+
+	float angleBetween(Vector3f& one, Vector3f& two, Vector3f& ref);
 };
 #endif

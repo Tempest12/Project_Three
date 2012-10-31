@@ -45,6 +45,8 @@ float planeScroll;
 
 float sineOfSixty;
 
+bool showSpheres = true;
+
 RenderWindow::RenderWindow() : Fl_Gl_Window(0, 0, "")
 {
 	camera = new Camera();
@@ -246,44 +248,59 @@ void RenderWindow::draw()
 
 	glColor3f(0.0f, 0.0f, 0.8f);
 
-	mesh->renderMesh();
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	//Draw Spheres
-    for(int index = 0; index < sphereList -> size(); index++)
+	if(showSpheres)
 	{
-		(*sphereList)[index].draw();
-	}
 
-	if(Fl::event_shift())
-	{
-		Vector3f* direction = MyVector::subtract(camera->focusPoint, camera->position);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		direction->normalize();
-		direction->scale(12);
-		direction->add(camera->position);
-
-		glPushMatrix();
-		{
-			glColor3f(1.0f, 0.0f, 1.0f);
-			glTranslatef(direction->x, direction->y, direction->z);
-			glutSolidSphere(spawnRadius, 17, 17);			
-		}
-		glPopMatrix();
-
-		delete direction;
-	}
-
-	if(displayPlane)
-	{
-		for(int x = 0; x < planeSize; x++)
-		{
-			for(int y = 0; y < planeSize; y++)
+			//Draw Spheres
+			for(int index = 0; index < sphereList -> size(); index++)
 			{
-				plane[x][y].draw();
+				(*sphereList)[index].draw();
 			}
-		}
+
+			if(Fl::event_shift())
+			{
+				Vector3f* direction = MyVector::subtract(camera->focusPoint, camera->position);
+
+				direction->normalize();
+				direction->scale(12);
+				direction->add(camera->position);
+
+				glPushMatrix();
+				{
+					glColor3f(1.0f, 0.0f, 1.0f);
+					glTranslatef(direction->x, direction->y, direction->z);
+					glutSolidSphere(spawnRadius, 17, 17);			
+				}
+				glPopMatrix();
+
+				delete direction;
+			}
+
+			if(displayPlane)
+			{
+				for(int x = 0; x < planeSize; x++)
+				{
+					for(int y = 0; y < planeSize; y++)
+					{
+						plane[x][y].draw();
+					}
+				}
+			}
+	}
+	else
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		mesh->renderMesh();
+
+
+		/*for(int index = 0; index < sphereList -> size(); index++)
+		{
+			(*sphereList)[index].draw(0.25);
+		}*/
+
 	}
 }
 
@@ -392,6 +409,15 @@ int RenderWindow::handle(int event)
 				case ' ':
 					displayPlane = !displayPlane;
 					break;
+				case 'c':
+					mesh->shell(*sphereList, 2);
+					showSpheres = false;
+					break;
+				case 'o':
+					mesh->loadMesh("../models/tetra.vts");
+					break;
+				case 'p':
+					mesh->saveMesh("../models/tetra.vts");
 				/*default:
 					if(Fl::event_shift())
 					{
