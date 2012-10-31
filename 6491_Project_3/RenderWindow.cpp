@@ -18,6 +18,7 @@
 #include "CornerMesh.h"
 
 std::vector<Sphere>* sphereList;
+std::vector<Sphere> blahList;
 
 float diskOneDistance;
 float diskOneRadius;
@@ -44,6 +45,8 @@ Colour4f planeColour;
 float planeScroll;
 
 float sineOfSixty;
+
+bool showSpheres = true;
 
 RenderWindow::RenderWindow() : Fl_Gl_Window(0, 0, "")
 {
@@ -89,10 +92,12 @@ void RenderWindow::initGraphcs()
 	first.moving = false;
 	sphereList -> push_back(first);
 
-	mesh->loadMesh("../models/tetra.vts");
-	mesh->saveMesh("../models/retet.vts");
+	//mesh->loadMesh("../models/tetra.vts");
+	//mesh->saveMesh("../models/retet.vts");
 
 	sineOfSixty = sin(60 * degreeToRadian);
+
+	blahList = vector<Sphere>();
 }
 
 void RenderWindow::update(void)
@@ -127,9 +132,6 @@ void RenderWindow::update(void)
 				//If One sphere is a destroyer we wipe out both
 				if((*sphereList)[indexOne].destroyer || (*sphereList)[indexTwo].destroyer)
 				{
-					sphereList->erase(sphereList->begin() + indexTwo);
-					sphereList->erase(sphereList->begin() + indexOne - 1);
-
 					if((*sphereList)[indexOne].destroyer == false)
 					{
 						(*sphereList)[indexOne].removeAllConnections();	
@@ -142,6 +144,9 @@ void RenderWindow::update(void)
 					{
 						//What?
 					}
+
+					sphereList->erase(sphereList->begin() + indexTwo);
+					sphereList->erase(sphereList->begin() + indexOne - 1);
 
 					indexOne--;
 					indexTwo--;
@@ -212,8 +217,6 @@ void RenderWindow::update(void)
 
 		for(int listIndex = 0; listIndex < (int)sphereList->size(); listIndex++)
 		{
-			
-
 			if((*sphereList)[listIndex].moving == false || (*sphereList)[listIndex].destroyer)
 			{
 				continue;
@@ -246,44 +249,56 @@ void RenderWindow::draw()
 
 	glColor3f(0.0f, 0.0f, 0.8f);
 
-	mesh->renderMesh();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	//Draw Spheres
-    for(int index = 0; index < sphereList -> size(); index++)
+	if(!showSpheres)
 	{
-		(*sphereList)[index].draw();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		mesh->renderMesh();
 	}
-
-	if(Fl::event_shift())
+	else
 	{
-		Vector3f* direction = MyVector::subtract(camera->focusPoint, camera->position);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		direction->normalize();
-		direction->scale(12);
-		direction->add(camera->position);
-
-		glPushMatrix();
-		{
-			glColor3f(1.0f, 0.0f, 1.0f);
-			glTranslatef(direction->x, direction->y, direction->z);
-			glutSolidSphere(spawnRadius, 17, 17);			
-		}
-		glPopMatrix();
-
-		delete direction;
-	}
-
-	if(displayPlane)
-	{
-		for(int x = 0; x < planeSize; x++)
-		{
-			for(int y = 0; y < planeSize; y++)
+			//Draw Spheres
+			for(int index = 0; index < sphereList -> size(); index++)
 			{
-				plane[x][y].draw();
+				(*sphereList)[index].draw();
 			}
-		}
+
+			if(Fl::event_shift())
+			{
+				Vector3f* direction = MyVector::subtract(camera->focusPoint, camera->position);
+
+				direction->normalize();
+				direction->scale(12);
+				direction->add(camera->position);
+
+				glPushMatrix();
+				{
+					glColor3f(1.0f, 0.0f, 1.0f);
+					glTranslatef(direction->x, direction->y, direction->z);
+					glutSolidSphere(spawnRadius, 17, 17);			
+				}
+				glPopMatrix();
+
+				delete direction;
+			}
+
+			for(int index = 0; index < blahList.size(); index++)
+			{
+				blahList[index].draw();
+			}
+
+			if(displayPlane)
+			{
+				for(int x = 0; x < planeSize; x++)
+				{
+					for(int y = 0; y < planeSize; y++)
+					{
+						plane[x][y].draw();
+					}
+				}
+			}
 	}
 }
 
@@ -291,8 +306,8 @@ int RenderWindow::handle(int event)
 {
 	switch(event)
 	{
-		case FL_PUSH: //Mouse Down
-
+		case FL_PUSH: 
+			//Mouse Down
 			//Left CLick to add spheres
 			if(Fl::event_button() == 1/*LEFT*/)
 			{
@@ -391,6 +406,10 @@ int RenderWindow::handle(int event)
 					break;
 				case ' ':
 					displayPlane = !displayPlane;
+					break;
+				case 'c':
+					mesh->shell(*sphereList, 1);
+					showSpheres = false;
 					break;
 				/*default:
 					if(Fl::event_shift())
@@ -506,7 +525,6 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 {
 	vector<Sphere>* touchingList = station->touching; 
 
-	Sphere* tempSphere;
 	Vector3f tempPosition;
 
 	Vector3f midPoint;
@@ -528,14 +546,14 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 
 	for(int index = 0; index < touchingList->size() && !found; index++)
 	{
-		tempSphere = &(*touchingList)[index];
+		Sphere& tempSphere = (*touchingList)[index];
 
 		//Calculate MidPoint
-		midPoint = MyVector::midPoint(tempSphere->position, station->position);
+		midPoint = MyVector::midPoint(tempSphere.position, station->position);
 		
 		//Calculate the Plane of the midpoint
 		planeOne = Vector3f(moving->position->x - station->position->x, moving->position->y - station->position->y, moving->position->z - station->position->z);
-		planeTwo = Vector3f(tempSphere->position->x - station->position->x, tempSphere->position->y - station->position->y, tempSphere->position->z - station->position->z); 
+		planeTwo = Vector3f(tempSphere.position->x - station->position->x, tempSphere.position->y - station->position->y, tempSphere.position->z - station->position->z); 
 
 		//Get the normal of that Plane
 		planeNormal = MyVector::crossProduct(&planeOne, &planeTwo);
@@ -543,72 +561,123 @@ void RenderWindow::slideNewConnection(Sphere* moving, Sphere* station, int movin
 		//Calculate the first H vector
 		upHeight = MyVector::crossProduct(planeNormal, &planeTwo);
 		upHeight->normalize();
-		upHeight->scale(sineOfSixty/(2 * spawnRadius));
+		upHeight->scale(sineOfSixty * spawnRadius * 2);
 
 		downHeight = new Vector3f(-upHeight->x, -upHeight->y, -upHeight->z);
 
+		upHeight->add(&midPoint);
+		downHeight->add(&midPoint);
+		
 		up = planeOne.dotProduct(upHeight);
-		down = planeTwo.dotProduct(downHeight);
+		down = planeOne.dotProduct(downHeight);
 
-		if(up == 0.0f && down == 0.0f)
+		if((up == down))
 		{
-			//let's just use up... 
-			//Calculate the new would be point
-			tempPosition = Vector3f(midPoint.x + upHeight->x, midPoint.y + upHeight->y, midPoint.z + upHeight->z);
-			
+			//let's just use up... 			
 			//Is this point a valid postion? IE no collisions
-			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			if(checkForCollisions(upHeight, movingIndex, stationIndex))
 			{
-				//contining after the deletions though
+				if(checkForCollisions(downHeight, movingIndex, stationIndex))
+				{
+					//continue
+				}
+				else
+				{
+					restPoint->copy(downHeight);
+					found = true;
+
+					slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+					moving->addConnection(&tempSphere);
+					tempSphere.addConnection(moving);
+				}
 			}
 			else
 			{
 				//False means there were no collisions
-				restPoint->copy(&tempPosition);
+				restPoint->copy(upHeight);
 				found = true;
+
+				//Look for a thrid Sphere to connect to.
+				slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+
+				moving->addConnection(&tempSphere);
+				tempSphere.addConnection(moving);
 			}
 		}
-		else if(up > 0.0f && down < 0.0f)
+		else if(up > down)
 		{
 			//Calculate the new would be point
-			tempPosition = Vector3f(midPoint.x + upHeight->x, midPoint.y + upHeight->y, midPoint.z + upHeight->z);
-			
 			//Is this point a valid postion? IE no collisions
-			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			if(checkForCollisions(upHeight, movingIndex, stationIndex))
 			{
-				//contining after the deletions though
+				if(checkForCollisions(downHeight, movingIndex, stationIndex))
+				{
+					//continue
+				}
+				else
+				{
+					restPoint->copy(downHeight);
+					found = true;
+
+					slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+					moving->addConnection(&tempSphere);
+					tempSphere.addConnection(moving);
+				}
 			}
 			else
 			{
 				//False means there were no collisions
-				restPoint->copy(&tempPosition);
+				restPoint->copy(upHeight);
 				found = true;
+
+				//Look for a thrid Sphere to connect to.
+				slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+
+				moving->addConnection(&tempSphere);
+				tempSphere.addConnection(moving);
 			}
 		}
-		else if(up < 0.0f && down > 0.0f)
+		else if(up < down)
 		{
 			//Calculate the new would be point
-			tempPosition = Vector3f(midPoint.x + downHeight->x, midPoint.y + downHeight->y, midPoint.z + downHeight->z);
-			
 			//Is this point a valid postion? IE no collisions
-			if(checkForCollisions(&tempPosition, movingIndex, stationIndex))
+			if(checkForCollisions(downHeight, movingIndex, stationIndex))
 			{
-				//contining after the deletions though
+				if(checkForCollisions(upHeight, movingIndex, stationIndex))
+				{
+					//continue
+				}
+				else
+				{
+					restPoint->copy(upHeight);
+					found = true;
+
+					slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+					moving->addConnection(&tempSphere);
+					tempSphere.addConnection(moving);
+				}
 			}
 			else
 			{
 				//False means there were no collisions
-				restPoint->copy(&tempPosition);
+				restPoint->copy(downHeight);
 				found = true;
+				
+				//Look for a thrid Sphere to connect to.
+				slideAgain(moving, station, &tempSphere, restPoint, movingIndex, stationIndex);
+
+				moving->addConnection(&tempSphere);
+				tempSphere.addConnection(moving);
 			}
 		}
 		else
 		{
 			//This should never ever happen
 			std::cout << "We have a problem both H vectors we negative" << std::endl;
-			std::cout << *(station->position) << "        " << *(moving->position) << std::endl;
-			std::cout << planeOne << "       " << planeTwo << std::endl;
-			std::cout << *upHeight << "       " << *downHeight << std::endl;
+			std::cout << "Up: " << up << " Down: " << down << std::endl;
+//			std::cout << *(station->position) << "        " << *(moving->position) << std::endl;
+//			std::cout << planeOne << "       " << planeTwo << std::endl;
+//			std::cout << *upHeight << "       " << *downHeight << std::endl;
 		}
 
 		//delete secondCross;
@@ -638,4 +707,142 @@ bool RenderWindow::checkForCollisions(Vector3f* tempPosition, int ignoreOne, int
 	}
 
 	return false;
+}
+
+ 
+
+void RenderWindow::slideAgain(Sphere* moving, Sphere* station, Sphere* neighbor, Vector3f* restPoint, int indexOne, int indexTwo)
+{
+	Sphere* tempSphere;
+
+	vector<Sphere>* stationList = station->touching;
+	vector<Sphere>* neighborList = station->touching;
+
+	//Skip if there's not enough connections
+	if(stationList->size() == 1 && neighborList->size() == 1)
+	{
+		//Nope Nothing to connect to here.
+		std::cout << "Not enough things to connect to." << std::endl;
+		return;
+	}
+
+	for(int stationIndex = 0; stationIndex < stationList->size(); stationList++)
+	{
+		for(int neighborIndex = 0; neighborIndex < neighborList->size(); neighborIndex++)
+		{
+			if((*stationList)[stationIndex] == &(*neighborList)[neighborIndex])
+			{
+				//We've found a sphere that both connnect to.
+				Sphere* tempSphere = &(*stationList)[stationIndex];
+				
+				//Time to compute a new Position if possible
+
+				//Compute the midpoint
+				Vector3f midPoint = Vector3f(); 
+				triPoint(station, neighbor, tempSphere, &midPoint);
+				//Compute the new up and down vectors
+				//First compute the plane of the 3 spheres... which form a triangle
+				Vector3f edgeOne = Vector3f(station->position->x - neighbor->position->x, station->position->y - neighbor->position->y, station->position->z - neighbor->position->z);
+				Vector3f edgeTwo = Vector3f(station->position->x - tempSphere->position->x, station->position->y - tempSphere->position->y, station->position->z - tempSphere->position->z);
+
+				//Pick a New up and Down.
+				Vector3f up = Vector3f(&edgeOne);//Starts as normal
+				up.crossProduct(&edgeTwo);
+				up.normalize();
+
+				float edgeLength = spawnRadius * 2 * std::sqrt(6.0f) / 3.0f;
+				up.scale(edgeLength);
+				Vector3f down = Vector3f(-up.x, -up.y, -up.z);
+
+				up.add(&midPoint);
+				down.add(&midPoint);
+
+				float upDot = up.dotProduct(moving->position);
+				float downDot = down.dotProduct(moving->position);
+
+				//Check for Collisions
+				if(upDot == 0.0f && downDot == 0.0f)
+				{
+					//Try up first:
+					if(checkForCollisions(&up, indexOne, indexTwo))
+					{
+						//Now try down?
+						if(checkForCollisions(&down, indexOne, indexTwo))
+						{//Collision
+							continue;
+						}
+						else
+						{//No Collisions
+							restPoint->copy(&down);
+							tempSphere->addConnection(moving);
+							moving->addConnection(tempSphere);
+						}
+					}
+					else
+					{
+						restPoint->copy(&up);
+						tempSphere->addConnection(moving);
+						moving->addConnection(tempSphere);
+					}
+				}
+				else if(upDot > 0.0f && downDot < 0.0f)
+				{
+					//Try up first:
+					if(checkForCollisions(&up, indexOne, indexTwo))
+					{
+						//Now try down?
+						if(checkForCollisions(&down, indexOne, indexTwo))
+						{//Collision
+							continue;
+						}
+						else
+						{//No Collisions
+							restPoint->copy(&down);
+							tempSphere->addConnection(moving);
+							moving->addConnection(tempSphere);
+						}
+					}
+					else
+					{
+						restPoint->copy(&up);
+						tempSphere->addConnection(moving);
+						moving->addConnection(tempSphere);
+					}
+				}
+				else if(upDot < 0.0f && downDot > 0.0f)
+				{
+					//Try down first:
+					if(checkForCollisions(&down, indexOne, indexTwo))
+					{
+						//Now try down?
+						if(checkForCollisions(&up, indexOne, indexTwo))
+						{//Collision
+							continue;
+						}
+						else
+						{//No Collisions
+							restPoint->copy(&up);
+							tempSphere->addConnection(moving);
+							moving->addConnection(tempSphere);
+						}
+					}
+					else
+					{
+						restPoint->copy(&down);
+						tempSphere->addConnection(moving);
+						moving->addConnection(tempSphere);
+					}
+				}
+			}
+		}
+	}
+}
+
+void RenderWindow::triPoint(Sphere* one, Sphere* two, Sphere* three, Vector3f* answer)
+{
+	answer->add(one->position);
+	answer->add(two->position);
+	answer->add(three->position);
+
+	answer->scale(1.0f/3.0f);
 }

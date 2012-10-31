@@ -45,5 +45,9 @@ class RenderWindow : public Fl_Gl_Window
 		void slideNewConnection(Sphere* moving, Sphere* station, int movingIndex, int stationIndex, Vector3f* restPoint);
 
 		bool checkForCollisions(Vector3f* position, int ignoreOne, int ignoreTwo);
+
+		void slideAgain(Sphere* moving, Sphere* station, Sphere* neighbor, Vector3f* restPoint, int indexOne, int indexTwo);
+
+		void triPoint(Sphere* one, Sphere* two, Sphere* three, Vector3f* answer);
 };
 #endif

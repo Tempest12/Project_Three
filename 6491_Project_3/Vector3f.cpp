@@ -75,3 +75,8 @@ Vector3f MyVector::midPoint(Vector3f* one, Vector3f* two)
 
 	//return;
 }
+
+float MyVector::distance(Vector3f* one, Vector3f* two)
+{
+	return ((one->x - two ->x) * (one->x - two ->x) + (one->y - two ->y) * (one->y - two ->y) + (one->z - two ->z) * (one->z - two ->z));
+}

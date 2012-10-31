@@ -220,6 +220,8 @@ int CornerMesh::pivotAroundEdge(vector<Sphere>& spheres, int e1, int e2, Sphere&
 
 		Vector3f toCurrentPos = Vector3f(currentPos.x - mid.x, currentPos.y - mid.y, currentPos.z - mid.z);
 
+		cout << "Test: " << *(b.position) << endl;
+
 		float angle = acos(trajectory.dotProduct(&toCurrentPos));
 
 		if(angle < earliestTrajectory)
@@ -305,6 +307,7 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 
 		if(angle < minAngle)
 		{
+			cout << "i: " << i << endl;
 			secondSphereIndex = i;
 			minAngle = angle;
 
@@ -334,10 +337,10 @@ void CornerMesh::shell(vector<Sphere>& spheres, float rollerRadius)
 	VTable.push_back(GTable.size()-1);
 	OTable.push_back(VTable.size()-1);
 
-
+	cout << secondSphereIndex << "   " << highestYIndex << endl;
 
 	//Create seed triangle
-	int thirdSphereIndex = pivotAroundEdge(spheres, highestYIndex, secondSphereIndex, roller);
+	int thirdSphereIndex = pivotAroundEdge(spheres, secondSphereIndex, highestYIndex, roller);
 	if(thirdSphereIndex == -1)
 		return;
 

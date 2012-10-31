@@ -87,7 +87,7 @@ spawn_count 1
 spawn_radius 1.0f
 spawn_speed 0.05f
 
-scroll_factor 0.15f
+scroll_factor 0.0f
 plane_scroll 0.25f
 
 end_section
